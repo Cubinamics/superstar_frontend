@@ -84,28 +84,31 @@ function App() {
 
   // Generate random outfits from preloaded images
   const generateRandomOutfits = useCallback(() => {
-    const getRandomImage = (part) => {
-      const genders = ['male', 'female', 'neutral'];
-      const allFiles = [];
-      
-      genders.forEach(gender => {
-        const category = `${gender}_${part}`;
-        if (preloadedImages[category]) {
-          allFiles.push(...Object.keys(preloadedImages[category]));
+    // First, pick a random gender for consistency
+    const genders = ['male', 'female'];
+    const selectedGender = genders[Math.floor(Math.random() * genders.length)];
+    
+    const getRandomImageForGender = (part, gender) => {
+      const category = `${gender}_${part}`;
+      if (preloadedImages[category]) {
+        const availableFiles = Object.keys(preloadedImages[category]);
+        if (availableFiles.length > 0) {
+          return availableFiles[Math.floor(Math.random() * availableFiles.length)];
         }
-      });
-      
-      if (allFiles.length === 0) return null;
-      return allFiles[Math.floor(Math.random() * allFiles.length)];
+      }
+      return null;
     };
 
+    console.log('Generating random outfits for gender:', selectedGender);
+    console.log('Available categories:', Object.keys(preloadedImages));
+
     return {
-      head: getRandomImage('head'), // Dynamic head based on gender
-      top: getRandomImage('top'),
-      bottom: getRandomImage('bottom'),
-      shoes: getRandomImage('shoes'),
-      left: getRandomImage('left'),
-      right: getRandomImage('right'),
+      head: getRandomImageForGender('head', selectedGender),
+      top: getRandomImageForGender('top', selectedGender),
+      bottom: getRandomImageForGender('bottom', selectedGender),
+      shoes: getRandomImageForGender('shoes', selectedGender),
+      left: getRandomImageForGender('left', selectedGender),
+      right: getRandomImageForGender('right', selectedGender),
     };
   }, [preloadedImages]);
 
@@ -239,12 +242,14 @@ function App() {
 
       {/* render outfit images names for debug*/}
       <div className="outfit-names absolute top-10 left-10 z-10 bg-white bg-opacity-75 p-2 rounded shadow">
-        <span className="outfit-name head">{currentOutfits.head}</span>
-        <span className="outfit-name top">{currentOutfits.top}</span>
-        <span className="outfit-name bottom">{currentOutfits.bottom}</span>
-        <span className="outfit-name shoes">{currentOutfits.shoes}</span>
-        <span className="outfit-name left">{currentOutfits.left}</span>
-        <span className="outfit-name right">{currentOutfits.right}</span>
+        <div><strong>Current Outfits:</strong></div>
+        <div className="outfit-name head">Head: {currentOutfits.head || 'none'}</div>
+        <div className="outfit-name top">Top: {currentOutfits.top || 'none'}</div>
+        <div className="outfit-name bottom">Bottom: {currentOutfits.bottom || 'none'}</div>
+        <div className="outfit-name shoes">Shoes: {currentOutfits.shoes || 'none'}</div>
+        <div className="outfit-name left">Left: {currentOutfits.left || 'none'}</div>
+        <div className="outfit-name right">Right: {currentOutfits.right || 'none'}</div>
+        <div><strong>Images loaded:</strong> {Object.keys(preloadedImages).length}</div>
       </div>
 
       <div className="display-grid">
