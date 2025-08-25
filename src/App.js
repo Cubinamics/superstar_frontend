@@ -84,8 +84,8 @@ function App() {
 
   // Generate random outfits from preloaded images
   const generateRandomOutfits = useCallback(() => {
-    // First, pick a random gender for consistency
-    const genders = ['male', 'female'];
+    // First, pick a random gender for consistency (now includes neutral)
+    const genders = ['male', 'female', 'neutral'];
     const selectedGender = genders[Math.floor(Math.random() * genders.length)];
     
     const getRandomImageForGender = (part, gender) => {
@@ -189,7 +189,7 @@ function App() {
     if (mode === 'idle' && Object.keys(preloadedImages).length > 0) {
       interval = setInterval(() => {
         setCurrentOutfits(generateRandomOutfits());
-      }, 10000);
+      }, 5000);
     }
 
     return () => {
