@@ -142,7 +142,7 @@ function App() {
               
             case 'session':
               setMode('session');
-              setUserPhoto(data.data?.userPhoto);
+              setUserPhoto(data.data?.userPhotoToken);
               setCurrentOutfits(data.data?.outfits || {});
               break;
               
@@ -240,8 +240,8 @@ function App() {
         <span className="mode-indicator">Mode: {mode}</span>
       </div>
 
-      {/* render outfit images names for debug*/}
-      <div className="outfit-names absolute top-10 left-10 z-10 bg-white bg-opacity-75 p-2 rounded shadow">
+      {/* render outfit images names for debug */}
+      {/* <div className="outfit-names absolute top-10 left-10 z-10 bg-white bg-opacity-75 p-2 rounded shadow">
         <div><strong>Current Outfits:</strong></div>
         <div className="outfit-name head">Head: {currentOutfits.head || 'none'}</div>
         <div className="outfit-name top">Top: {currentOutfits.top || 'none'}</div>
@@ -250,7 +250,7 @@ function App() {
         <div className="outfit-name left">Left: {currentOutfits.left || 'none'}</div>
         <div className="outfit-name right">Right: {currentOutfits.right || 'none'}</div>
         <div><strong>Images loaded:</strong> {Object.keys(preloadedImages).length}</div>
-      </div>
+      </div> */}
 
       <div className="display-grid">
         {/* Row 1: Logo Left - Head - Logo Right */}
