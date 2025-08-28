@@ -45,9 +45,10 @@ function App() {
         });
       });
 
-      // Load logo images
+      // Load logo images and default head GIF
       const logoLeft = new Image();
       const logoRight = new Image();
+      const headGif = new Image();
       
       const logoPromises = [
         new Promise(resolve => {
@@ -65,6 +66,14 @@ function App() {
           };
           logoRight.onerror = resolve;
           logoRight.src = `${BACKEND_URL}/public/outfits/Logo_Right_static.png`;
+        }),
+        new Promise(resolve => {
+          headGif.onload = () => {
+            imageMap['default_head'] = `${BACKEND_URL}/public/outfits/Head.gif`;
+            resolve();
+          };
+          headGif.onerror = resolve;
+          headGif.src = `${BACKEND_URL}/public/outfits/Head.gif`;
         })
       ];
 
@@ -82,7 +91,7 @@ function App() {
     }
   }, []);
 
-  // Generate random outfits from preloaded images
+  // Generate random outfits from preloaded images (excluding head)
   const generateRandomOutfits = useCallback(() => {
     // First, pick a random gender for consistency (now includes neutral)
     const genders = ['male', 'female', 'neutral'];
@@ -103,7 +112,7 @@ function App() {
     console.log('Available categories:', Object.keys(preloadedImages));
 
     return {
-      head: getRandomImageForGender('head', selectedGender),
+      // head is now handled separately - always use GIF in idle mode
       top: getRandomImageForGender('top', selectedGender),
       bottom: getRandomImageForGender('bottom', selectedGender),
       shoes: getRandomImageForGender('shoes', selectedGender),
@@ -243,7 +252,7 @@ function App() {
       {/* render outfit images names for debug */}
       {/* <div className="outfit-names absolute top-10 left-10 z-10 bg-white bg-opacity-75 p-2 rounded shadow">
         <div><strong>Current Outfits:</strong></div>
-        <div className="outfit-name head">Head: {currentOutfits.head || 'none'}</div>
+        <div className="outfit-name head">Head: {mode === 'session' && userPhoto ? 'User Photo' : 'Default GIF'}</div>
         <div className="outfit-name top">Top: {currentOutfits.top || 'none'}</div>
         <div className="outfit-name bottom">Bottom: {currentOutfits.bottom || 'none'}</div>
         <div className="outfit-name shoes">Shoes: {currentOutfits.shoes || 'none'}</div>
@@ -269,16 +278,12 @@ function App() {
               alt="User Head" 
               className="user-photo"
             />
-          ) : currentOutfits.head ? (
+          ) : (
             <img 
-              src={getImageUrl(currentOutfits.head)} 
-              alt="Head" 
+              src={preloadedImages.default_head} 
+              alt="Default Head Animation" 
               className="outfit-image"
             />
-          ) : (
-            <div className="head-placeholder">
-              <h3>Head</h3>
-            </div>
           )}
         </div>
 
