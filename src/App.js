@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ManualUpload from './ManualUpload';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 const API_KEY = 'adidas-superstar-2025-secret'; // Must match backend API key
 
-function App() {
+function MainDisplay() {
   // State management
   const [mode, setMode] = useState('idle'); // 'idle' | 'session'
   const [preloadedImages, setPreloadedImages] = useState({});
   const [currentOutfits, setCurrentOutfits] = useState({});
   const [userPhoto, setUserPhoto] = useState(null);
+  const [photoSource, setPhotoSource] = useState(null); // 'mobile' | 'manual'
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,7 +65,7 @@ function App() {
   const preloadImages = useCallback(async () => {
     try {
       console.log('Starting image preloading...');
-      const response = await fetch(`${BACKEND_URL}/outfits`, {
+      const response = await fetch(`${BACKEND_URL}/api/outfits`, {
         headers: getApiHeaders(),
       });
       const data = await response.json();
@@ -174,7 +177,7 @@ function App() {
     let eventSource;
 
     const connectSSE = () => {
-      eventSource = new EventSource(`${BACKEND_URL}/events`);
+      eventSource = new EventSource(`${BACKEND_URL}/api/events`);
       
       eventSource.onopen = () => {
         console.log('SSE connection established');
@@ -194,18 +197,21 @@ function App() {
             case 'idle':
               setMode('idle');
               setUserPhoto(null);
+              setPhotoSource(null);
               setCurrentOutfits(generateRandomOutfits());
               break;
               
             case 'session':
               setMode('session');
               setUserPhoto(data.data?.userPhotoToken);
+              setPhotoSource(data.data?.source);
               setCurrentOutfits(data.data?.outfits || {});
               break;
               
             case 'timeout':
               setMode('idle');
               setUserPhoto(null);
+              setPhotoSource(null);
               setCurrentOutfits(generateRandomOutfits());
               break;
               
@@ -356,7 +362,7 @@ function App() {
             <img 
               src={userPhoto} 
               alt="User Head" 
-              className="user-photo"
+              className={`user-photo ${photoSource === 'mobile' ? 'mobile-photo' : 'manual-photo'}`}
             />
           ) : (
             <img 
@@ -432,6 +438,18 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main App component with routing
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainDisplay />} />
+        <Route path="/manual" element={<ManualUpload />} />
+      </Routes>
+    </Router>
   );
 }
 
