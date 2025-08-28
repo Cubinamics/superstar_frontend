@@ -223,6 +223,13 @@ function ManualUpload() {
               >
                 FEMALE
               </button>
+              <button 
+                className="gender-button"
+                onClick={() => handleGenderSelect('neutral')}
+                disabled={isLoading}
+              >
+                NEUTRAL
+              </button>
             </div>
           </div>
         )}
