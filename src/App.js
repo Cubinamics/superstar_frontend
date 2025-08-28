@@ -174,9 +174,7 @@ function App() {
     let eventSource;
 
     const connectSSE = () => {
-      eventSource = new EventSource(`${BACKEND_URL}/events`, {
-        headers: getApiHeaders(),
-      });
+      eventSource = new EventSource(`${BACKEND_URL}/events`);
       
       eventSource.onopen = () => {
         console.log('SSE connection established');
