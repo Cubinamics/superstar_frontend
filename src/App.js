@@ -164,12 +164,12 @@ function App() {
         console.error('SSE connection error:', error);
         setConnectionStatus('disconnected');
         
-        // Reconnect after 5 seconds
+        // Reconnect after 10 seconds
         setTimeout(() => {
           if (eventSource.readyState === EventSource.CLOSED) {
             connectSSE();
           }
-        }, 5000);
+        }, 10000);
       };
     };
 
@@ -189,7 +189,7 @@ function App() {
     if (mode === 'idle' && Object.keys(preloadedImages).length > 0) {
       interval = setInterval(() => {
         setCurrentOutfits(generateRandomOutfits());
-      }, 5000);
+      }, 10000);
     }
 
     return () => {
