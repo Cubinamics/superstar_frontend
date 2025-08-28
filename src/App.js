@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+const API_KEY = 'adidas-superstar-2025-secret'; // Must match backend API key
 
 function App() {
   // State management
@@ -11,12 +12,59 @@ function App() {
   const [userPhoto, setUserPhoto] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authInput, setAuthInput] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  // Helper function to get headers with API key
+  const getApiHeaders = () => ({
+    'x-api-key': API_KEY,
+  });
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const storedKey = localStorage.getItem('adidas-api-key');
+      
+      if (storedKey === API_KEY) {
+        // Key is stored and valid, proceed with authentication
+        setIsAuthenticated(true);
+        return;
+      }
+      
+      // No valid key stored, show auth overlay
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  // Handle authentication form submission
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    
+    if (authInput === API_KEY) {
+      // Store key in localStorage
+      localStorage.setItem('adidas-api-key', API_KEY);
+      setIsAuthenticated(true);
+      setAuthError('');
+      setIsLoading(true);
+      // Start loading the app
+      preloadImages();
+    } else {
+      setAuthError('Invalid access key. Please contact system administrator.');
+      setAuthInput('');
+    }
+  };
 
   // Preload all outfit images into memory
   const preloadImages = useCallback(async () => {
     try {
       console.log('Starting image preloading...');
-      const response = await fetch(`${BACKEND_URL}/outfits`);
+      const response = await fetch(`${BACKEND_URL}/outfits`, {
+        headers: getApiHeaders(),
+      });
       const data = await response.json();
       
       const imagePromises = [];
@@ -126,7 +174,9 @@ function App() {
     let eventSource;
 
     const connectSSE = () => {
-      eventSource = new EventSource(`${BACKEND_URL}/events`);
+      eventSource = new EventSource(`${BACKEND_URL}/events`, {
+        headers: getApiHeaders(),
+      });
       
       eventSource.onopen = () => {
         console.log('SSE connection established');
@@ -208,10 +258,12 @@ function App() {
     };
   }, [mode, preloadedImages, generateRandomOutfits]);
 
-  // Start preloading on component mount
+  // Start preloading on component mount (only when authenticated)
   useEffect(() => {
-    preloadImages();
-  }, [preloadImages]);
+    if (isAuthenticated) {
+      preloadImages();
+    }
+  }, [isAuthenticated, preloadImages]);
 
   // Get image URL from preloaded images
   const getImageUrl = (filename) => {
@@ -227,6 +279,36 @@ function App() {
     // Fallback to direct URL
     return `${BACKEND_URL}/public/outfits/${filename}`;
   };
+
+  // Show authentication overlay if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-container">
+          <div className="auth-content">
+            <h1>Adidas Superstar Experience</h1>
+            <p>Please enter the access key to continue</p>
+            <form onSubmit={handleAuth} className="auth-form">
+              <input
+                type="password"
+                value={authInput}
+                onChange={(e) => setAuthInput(e.target.value)}
+                placeholder="Access Key"
+                className="auth-input"
+                autoFocus
+              />
+              <button type="submit" className="auth-button">
+                Access Display
+              </button>
+            </form>
+            {authError && (
+              <p className="auth-error">{authError}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
