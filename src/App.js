@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import ManualUpload from './ManualUpload';
 import './App.css';
 
-const BACKEND_URL = '';
+const BACKEND_URL = 'http://localhost:3001';
 
 const API_KEY = 'adidas-superstar-2025-secret'; // Must match backend API key
 
@@ -173,75 +174,88 @@ function MainDisplay() {
     };
   }, [preloadedImages]);
 
-  // SSE connection for backend events
+  // WebSocket connection for backend events
   useEffect(() => {
-    let eventSource;
+    let socket;
 
-    const connectSSE = () => {
-      eventSource = new EventSource(`${BACKEND_URL}/api/events`);
+    const connectWebSocket = () => {
+      console.log('🔴 Attempting WebSocket connection to:', BACKEND_URL);
       
-      eventSource.onopen = () => {
-        console.log('SSE connection established');
+      socket = io(BACKEND_URL, {
+        transports: ['websocket', 'polling'], // Try WebSocket first, fallback to polling
+        timeout: 20000,
+        forceNew: true,
+      });
+      
+      socket.on('connect', () => {
+        console.log('🟢 WebSocket connection established, ID:', socket.id);
         setConnectionStatus('connected');
-      };
+      });
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log('SSE event received:', data);
+      socket.on('session-event', (data) => {
+        console.log('📨 WebSocket event received:', data);
 
-          switch (data.type) {
-            case 'connected':
-              setConnectionStatus('connected');
-              break;
-              
-            case 'idle':
-              setMode('idle');
-              setUserPhoto(null);
-              setPhotoSource(null);
-              setCurrentOutfits(generateRandomOutfits());
-              break;
-              
-            case 'session':
-              setMode('session');
-              setUserPhoto(data.data?.userPhotoToken);
-              setPhotoSource(data.data?.source);
-              setCurrentOutfits(data.data?.outfits || {});
-              break;
-              
-            case 'timeout':
-              setMode('idle');
-              setUserPhoto(null);
-              setPhotoSource(null);
-              setCurrentOutfits(generateRandomOutfits());
-              break;
-              
-            default:
-              console.log('Unknown event type:', data.type);
-          }
-        } catch (error) {
-          console.error('Error parsing SSE data:', error);
+        switch (data.type) {
+          case 'connected':
+            setConnectionStatus('connected');
+            console.log('✅ WebSocket connection confirmed');
+            break;
+            
+          case 'idle':
+            console.log('🏠 Switching to idle mode');
+            setMode('idle');
+            setUserPhoto(null);
+            setPhotoSource(null);
+            setCurrentOutfits(generateRandomOutfits());
+            break;
+            
+          case 'session':
+            console.log('📸 Switching to session mode:', data.data);
+            setMode('session');
+            setUserPhoto(data.data?.userPhotoToken);
+            setPhotoSource(data.data?.source);
+            setCurrentOutfits(data.data?.outfits || {});
+            break;
+            
+          case 'timeout':
+            console.log('⏰ Session timeout, returning to idle');
+            setMode('idle');
+            setUserPhoto(null);
+            setPhotoSource(null);
+            setCurrentOutfits(generateRandomOutfits());
+            break;
+            
+          default:
+            console.log('❓ Unknown event type:', data.type);
         }
-      };
+      });
 
-      eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
+      socket.on('keepalive', (data) => {
+        console.log('📡 WebSocket keepalive received:', data.timestamp);
+      });
+
+      socket.on('disconnect', (reason) => {
+        console.error('🔴 WebSocket disconnected:', reason);
         setConnectionStatus('disconnected');
-        
-        // Reconnect after 10 seconds
-        setTimeout(() => {
-          if (eventSource.readyState === EventSource.CLOSED) {
-            connectSSE();
-          }
-        }, 10000);
-      };
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('❌ WebSocket connection error:', error);
+        setConnectionStatus('disconnected');
+      });
+
+      socket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 WebSocket reconnected after', attemptNumber, 'attempts');
+        setConnectionStatus('connected');
+      });
     };
 
-    connectSSE();
+    connectWebSocket();
 
     return () => {
-      if (eventSource) {
-        eventSource.close();
+      if (socket) {
+        console.log('🔌 Cleaning up WebSocket connection');
+        socket.disconnect();
       }
     };
   }, [generateRandomOutfits]);
@@ -329,12 +343,12 @@ function MainDisplay() {
 
   return (
     <div className="App">
-      <div className="status-bar">
+      {/* <div className="status-bar">
         <span className={`connection-status ${connectionStatus}`}>
           {connectionStatus === 'connected' ? '🟢' : '🔴'} {connectionStatus}
         </span>
         <span className="mode-indicator">Mode: {mode}</span>
-      </div>
+      </div> */}
 
       {/* render outfit images names for debug */}
       {/* <div className="outfit-names absolute top-10 left-10 z-10 bg-white bg-opacity-75 p-2 rounded shadow">
