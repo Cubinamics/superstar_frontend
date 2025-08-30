@@ -16,52 +16,13 @@ function MainDisplay() {
   const [userPhoto, setUserPhoto] = useState(null);
   const [photoSource, setPhotoSource] = useState(null); // 'mobile' | 'manual'
   const [isLoading, setIsLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authInput, setAuthInput] = useState('');
-  const [authError, setAuthError] = useState('');
+  // eslint-disable-next-line no-unused-vars
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // Used in WebSocket connection
 
-  // Helper function to get headers with API key
+  // Helper function to get headers with API key (for server requests only)
   const getApiHeaders = () => ({
     'x-api-key': API_KEY,
   });
-
-  // Check authentication on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const storedKey = localStorage.getItem('adidas-api-key');
-      
-      if (storedKey === API_KEY) {
-        // Key is stored and valid, proceed with authentication
-        setIsAuthenticated(true);
-        return;
-      }
-      
-      // No valid key stored, show auth overlay
-      setIsAuthenticated(false);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  // Handle authentication form submission
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    
-    if (authInput === API_KEY) {
-      // Store key in localStorage
-      localStorage.setItem('adidas-api-key', API_KEY);
-      setIsAuthenticated(true);
-      setAuthError('');
-      setIsLoading(true);
-      // Start loading the app
-      preloadImages();
-    } else {
-      setAuthError('Invalid access key. Please contact system administrator.');
-      setAuthInput('');
-    }
-  };
 
   // Preload all outfit images into memory
   const preloadImages = useCallback(async () => {
@@ -277,12 +238,10 @@ function MainDisplay() {
     };
   }, [mode, preloadedImages, generateRandomOutfits]);
 
-  // Start preloading on component mount (only when authenticated)
+  // Start preloading on component mount
   useEffect(() => {
-    if (isAuthenticated) {
-      preloadImages();
-    }
-  }, [isAuthenticated, preloadImages]);
+    preloadImages();
+  }, [preloadImages]);
 
   // Get image URL from preloaded images
   const getImageUrl = (filename) => {
@@ -298,36 +257,6 @@ function MainDisplay() {
     // Fallback to direct URL
     return `${BACKEND_URL}/public/outfits/${filename}`;
   };
-
-  // Show authentication overlay if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="auth-overlay">
-        <div className="auth-container">
-          <div className="auth-content">
-            <h1>Adidas Superstar Experience</h1>
-            <p>Please enter the access key to continue</p>
-            <form onSubmit={handleAuth} className="auth-form">
-              <input
-                type="password"
-                value={authInput}
-                onChange={(e) => setAuthInput(e.target.value)}
-                placeholder="Access Key"
-                className="auth-input"
-                autoFocus
-              />
-              <button type="submit" className="auth-button">
-                Access Display
-              </button>
-            </form>
-            {authError && (
-              <p className="auth-error">{authError}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (

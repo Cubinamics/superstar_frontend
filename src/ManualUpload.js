@@ -14,11 +14,38 @@ function ManualUpload() {
   const [sessionId, setSessionId] = useState(null);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  
+  // Authentication state for manual upload protection
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authInput, setAuthInput] = useState('');
+  const [authError, setAuthError] = useState('');
 
   // Helper function to get headers with API key
   const getApiHeaders = () => ({
     'x-api-key': API_KEY,
   });
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const storedKey = localStorage.getItem('adidas-manual-key');
+    if (storedKey === API_KEY) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Handle authentication form submission
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    
+    if (authInput === API_KEY) {
+      localStorage.setItem('adidas-manual-key', API_KEY);
+      setIsAuthenticated(true);
+      setAuthError('');
+    } else {
+      setAuthError('Invalid access key.');
+      setAuthInput('');
+    }
+  };
 
   // Set up SSE connection for real-time updates
   useEffect(() => {
@@ -179,6 +206,41 @@ function ManualUpload() {
     }
     handleReset();
   };
+
+  // Show authentication overlay if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-container">
+          <div className="auth-content">
+            <h1>Manual Upload Access</h1>
+            <p>Please enter the access key to continue</p>
+            <form onSubmit={handleAuth} className="auth-form">
+              <input
+                type="password"
+                value={authInput}
+                onChange={(e) => setAuthInput(e.target.value)}
+                placeholder="Access Key"
+                className="auth-input"
+                autoFocus
+              />
+              <button type="submit" className="auth-button">
+                Access Manual Upload
+              </button>
+            </form>
+            {authError && (
+              <p className="auth-error">{authError}</p>
+            )}
+            <div className="back-link">
+              <a href="/" style={{ color: '#fff', textDecoration: 'none' }}>
+                ← Back to Main Display
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
